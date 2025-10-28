@@ -18,10 +18,11 @@ const Employee = () => {
     description: "",
     category: "",
     amount: "",
-    currency: "INR",
+    currency: "",
     date: "",
     paidBy: "",
     remarks: "",
+    receipt: null,
   });
 
   useEffect(() => {
@@ -119,21 +120,22 @@ const Employee = () => {
       let totalWaiting = 0,
         totalApproved = 0;
 
-      const compCurrency = user.UserExist.userCompany.baseCurrency.toLowerCase();
+      const compCurrency =
+        user.UserExist.userCompany.baseCurrency.toLowerCase();
 
       data.forEach((d) => {
-        let cur = d.currency.toLowerCase() ;
+        let cur = d.currency.toLowerCase();
         let e2c = conv[cur],
           c2e = 1 / e2c;
-        let amt = d.amount ;
+        let amt = d.amount;
         console.log(cur);
-        
+
         let convAmt = Math.round(amt * c2e * conv[compCurrency]);
 
         if (d.status === "Submitted") {
-          totalWaiting += convAmt ;
-        } else if(d.status === "Accepted") {
-          totalApproved += convAmt ;
+          totalWaiting += convAmt;
+        } else if (d.status === "Accepted") {
+          totalApproved += convAmt;
         }
       });
       setApprovedAmount(totalApproved);
@@ -147,6 +149,44 @@ const Employee = () => {
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
+  };
+
+  const handleFileChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setFormData((prev) => ({ ...prev, receipt: file }));
+
+    // create FormData to send to backend
+    const data = new FormData();
+    data.append("receipt", file);
+
+    try {
+      const res = await fetch("http://localhost:3000/qr/scan", {
+        method: "POST",
+        body: data,
+      });
+
+      const result = await res.json();
+
+      // console.log(result);
+
+      if (result && Object.keys(result).length > 0) {
+        setFormData((prev) => ({
+          ...prev,
+          description: result.description || prev.description,
+          amount: result.amount || prev.amount,
+          category: result.category || prev.category,
+          currency: result.currency || prev.currency,
+          paidBy: result.paidBy || prev.paidBy,
+          date: result.date || prev.date,
+        }));
+      } else {
+        alert("No QR code detected. Please enter details manually.");
+      }
+    } catch (err) {
+      console.error("QR scan error:", err);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -408,6 +448,18 @@ const Employee = () => {
                   onChange={handleInputChange}
                   className="p-2 rounded-md bg-zinc-700 text-white outline-none"
                 />
+
+                <div className="flex flex-row items-center justify-between">
+                  <p>Fill using receipt</p>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    name="receipt"
+                    onChange={handleFileChange}
+                    className="p-2 rounded-md bg-zinc-700 text-white outline-none cursor-pointer"
+                  />
+                </div>
+
                 <button
                   type="submit"
                   className="bg-blue-600 px-4 py-2 rounded-xl text-white font-semibold hover:bg-blue-700 mt-2 cursor-pointer duration-300"

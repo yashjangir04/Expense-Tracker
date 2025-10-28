@@ -6,6 +6,7 @@ const userRouter = require("./routes/user-router") ;
 const expenseRouter = require("./routes/expense-router") ;
 const jwtAuthenticator = require("./utils/jwt-verify") ;
 const emailSender = require("./utils/email-sender") ;
+const qrScanner = require("./routes/qr-router");
 const cors = require("cors") ;
 
 app.use(cors({
@@ -24,6 +25,7 @@ app.use("/users" , userRouter) ;
 app.use("/expense" , expenseRouter) ;
 app.use("/jwtverify" , jwtAuthenticator) ;
 app.use("/sendemail" , emailSender) ;
+app.use("/qr" , qrScanner) ;
 
 app.listen(3000 , () => {
     console.log("Server Running on PORT:3000 ✅")
